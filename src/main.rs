@@ -38,10 +38,9 @@ pub fn main() {
     }
 
     println!(
-        "\nProgram {} execute to completion in {} cycles{}",
-        if program_complete_index.is_some() { "did" } else { "did not" },
+        "\nProgram {} to completion in {} cycles",
+        if program_complete_index.is_some() { "executed" } else { "did not execute" },
         if let Some(index) = program_complete_index { index + 1 } else { cycle_max },
-        if program_complete_index.is_none() {"\nspecify the iteration cutoff after the source path"} else {""}
     );
 }
 
