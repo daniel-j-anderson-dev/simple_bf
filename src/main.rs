@@ -44,6 +44,43 @@ pub fn main() {
     );
 }
 
+fn parse_instructions(source_code: &str) -> Vec<Instruction> {
+    let mut program = Vec::<Instruction>::new();
+    let mut stack = Vec::<usize>::new();
+    for (character_index, character) in source_code
+        .chars()
+        .filter(Instruction::valid_char)
+        .enumerate()
+    {
+        let instruction = match character {
+            '>' => Instruction::IncreasePointer,
+            '<' => Instruction::DecrementPointer,
+            '+' => Instruction::IncreaseValue,
+            '-' => Instruction::DecreaseValue,
+            '.' => Instruction::Output,
+            ',' => Instruction::Input,
+            '[' => {
+                stack.push(character_index);
+                Instruction::JumpAhead(0)
+            }
+            ']' => {
+                let jump_back_index = stack.pop().expect("Missing open bracket(s)");
+                program[jump_back_index] = Instruction::JumpAhead(character_index);
+                Instruction::JumpBack(jump_back_index)
+            }
+            _ => continue,
+        };
+
+        program.push(instruction);
+    }
+
+    if !stack.is_empty() {
+        panic!("Missing closing bracket(s)");
+    }
+
+    program
+}
+
 #[derive(Debug)]
 pub enum Instruction {
     IncreasePointer,
@@ -64,6 +101,20 @@ impl Instruction {
     }
 }
 
+fn output(value: u8) {
+    use std::io::{stdout, Write};
+    stdout().write(&[value]).expect("Failed to write to stdout");
+    stdout().flush().expect("Failed to flush stdout");
+}
+
+fn input() -> u8 {
+    use std::io::{stdin, Read};
+    let mut input = [0];
+    stdin().read(&mut input).expect("Failed to read from stdin");
+    input[0]
+}
+
+
 fn get_source_code() -> String {
     std::fs::read_to_string(
         std::env::args()
@@ -80,54 +131,4 @@ fn get_cycle_max() -> usize {
         .unwrap_or_else(|| DEFAULT_CYCLE_MAX.to_string())
         .parse()
         .expect("First argument is invalid`")
-}
-
-fn parse_instructions(source_code: &str) -> Vec<Instruction> {
-    let mut instructions = Vec::<Instruction>::new();
-    let mut stack = Vec::<usize>::new();
-    for (character_index, character) in source_code
-        .chars()
-        .filter(Instruction::valid_char)
-        .enumerate()
-    {
-        let instruction = match character {
-            '>' => Instruction::IncreasePointer,
-            '<' => Instruction::DecrementPointer,
-            '+' => Instruction::IncreaseValue,
-            '-' => Instruction::DecreaseValue,
-            '.' => Instruction::Output,
-            ',' => Instruction::Input,
-            '[' => {
-                stack.push(character_index);
-                Instruction::JumpAhead(0)
-            }
-            ']' => {
-                let jump_back_index = stack.pop().expect("Missing open bracket(s)");
-                instructions[jump_back_index] = Instruction::JumpAhead(character_index);
-                Instruction::JumpBack(jump_back_index)
-            }
-            _ => continue,
-        };
-
-        instructions.push(instruction);
-    }
-
-    if !stack.is_empty() {
-        panic!("Missing closing bracket(s)");
-    }
-
-    instructions
-}
-
-fn output(value: u8) {
-    use std::io::{stdout, Write};
-    stdout().write(&[value]).expect("Failed to write to stdout");
-    stdout().flush().expect("Failed to flush stdout");
-}
-
-fn input() -> u8 {
-    use std::io::{stdin, Read};
-    let mut input = [0];
-    stdin().read(&mut input).expect("Failed to read from stdin");
-    input[0]
 }
