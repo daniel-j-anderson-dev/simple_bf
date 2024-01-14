@@ -2,13 +2,13 @@ pub fn main() {
     let source_code = get_source_code();
     let cycle_max = get_cycle_max();
     
-    const HEAP_SIZE: usize = 30000;
-    let mut program_complete_index = None;
-
-    let mut heap = [0u8; HEAP_SIZE];
-    let mut pointer = 0;
     let program = parse_instructions(&source_code);
     let mut program_counter = 0;
+    let mut program_complete_index = None;
+
+    const HEAP_SIZE: usize = 30000;
+    let mut heap = [0u8; HEAP_SIZE];
+    let mut pointer = 0;
 
     for cycle_index in 0..cycle_max {
         if let Some(instruction) = program.get(program_counter) {
