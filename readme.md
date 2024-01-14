@@ -36,5 +36,5 @@
  - `-` decrement the current value
  - `.` write the current value to the standard output stream
  - `,` store one byte from the standard input stream in the current value
- - `[` if the current value is 0 jump after the corresponding `]`
- - `]` if the current value is not 0 jump after the corresponding `[`
+ - `[` if the current value is 0 jump the instruction pointer after the corresponding `]`
+ - `]` if the current value is not 0 jump the instruction pointer after the corresponding `[`
