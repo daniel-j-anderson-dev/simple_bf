@@ -11,28 +11,27 @@ pub fn main() {
     let mut pointer = 0;
 
     for cycle_index in 0..cycle_max {
-        if let Some(instruction) = program.get(program_counter) {
-            match instruction {
-                Instruction::IncreasePointer => pointer = (pointer + 1) % HEAP_SIZE,
-                Instruction::DecrementPointer => pointer = pointer.checked_sub(1).unwrap_or(HEAP_SIZE - 1),
-                Instruction::IncreaseValue => heap[pointer] = heap[pointer].wrapping_add(1),
-                Instruction::DecreaseValue => heap[pointer] = heap[pointer].wrapping_sub(1),
-                Instruction::Output => output(heap[pointer]),
-                Instruction::Input => heap[pointer] = input(),
-                Instruction::JumpAhead(jump_index) => {
-                    if heap[pointer] == 0 {
-                        program_counter = *jump_index;
-                    }
-                }
-                Instruction::JumpBack(jump_index) => {
-                    if heap[pointer] != 0 {
-                        program_counter = *jump_index;
-                    }
-                }
-            }
-        } else {
+        let Some(current_instruction) = program.get(program_counter) else {
             program_complete_index = Some(cycle_index);
             break;
+        };
+        match current_instruction {
+            Instruction::IncreasePointer => pointer = (pointer + 1) % heap.len(),
+            Instruction::DecrementPointer => pointer = pointer.checked_sub(1).unwrap_or(heap.len() - 1),
+            Instruction::IncreaseValue => heap[pointer] = heap[pointer].wrapping_add(1),
+            Instruction::DecreaseValue => heap[pointer] = heap[pointer].wrapping_sub(1),
+            Instruction::Output => output(heap[pointer]),
+            Instruction::Input => heap[pointer] = input(),
+            Instruction::JumpAhead(jump_index) => {
+                if heap[pointer] == 0 {
+                    program_counter = *jump_index;
+                }
+            }
+            Instruction::JumpBack(jump_index) => {
+                if heap[pointer] != 0 {
+                    program_counter = *jump_index;
+                }
+            }
         }
         program_counter += 1;
     }
@@ -46,7 +45,8 @@ pub fn main() {
 
 fn parse_instructions(source_code: &str) -> Vec<Instruction> {
     let mut program = Vec::<Instruction>::new();
-    let mut stack = Vec::<usize>::new();
+    let mut open_bracket_indices = Vec::<usize>::new();
+    
     for (character_index, character) in source_code
         .chars()
         .filter(Instruction::valid_char)
@@ -60,12 +60,14 @@ fn parse_instructions(source_code: &str) -> Vec<Instruction> {
             '.' => Instruction::Output,
             ',' => Instruction::Input,
             '[' => {
-                stack.push(character_index);
+                open_bracket_indices.push(character_index);
                 Instruction::JumpAhead(0)
             }
             ']' => {
-                let jump_back_index = stack.pop().expect("Missing open bracket(s)");
-                program[jump_back_index] = Instruction::JumpAhead(character_index);
+                let jump_back_index = open_bracket_indices.pop().expect("Missing open bracket(s)");
+                let matching_jump_ahead = &mut program[jump_back_index];
+
+                *matching_jump_ahead = Instruction::JumpAhead(character_index);
                 Instruction::JumpBack(jump_back_index)
             }
             _ => continue,
@@ -74,14 +76,13 @@ fn parse_instructions(source_code: &str) -> Vec<Instruction> {
         program.push(instruction);
     }
 
-    if !stack.is_empty() {
+    if !open_bracket_indices.is_empty() {
         panic!("Missing closing bracket(s)");
     }
 
     program
 }
 
-#[derive(Debug)]
 pub enum Instruction {
     IncreasePointer,
     DecrementPointer,
