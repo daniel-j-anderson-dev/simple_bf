@@ -16,7 +16,7 @@ pub fn main() {
             break;
         };
         match current_instruction {
-            Instruction::IncreasePointer => pointer = (pointer + 1) % heap.len(),
+            Instruction::IncrementPointer => pointer = (pointer + 1) % heap.len(),
             Instruction::DecrementPointer => pointer = pointer.checked_sub(1).unwrap_or(heap.len() - 1),
             Instruction::IncreaseValue => heap[pointer] = heap[pointer].wrapping_add(1),
             Instruction::DecreaseValue => heap[pointer] = heap[pointer].wrapping_sub(1),
@@ -53,7 +53,7 @@ fn parse_instructions(source_code: &str) -> Vec<Instruction> {
         .enumerate()
     {
         let instruction = match character {
-            '>' => Instruction::IncreasePointer,
+            '>' => Instruction::IncrementPointer,
             '<' => Instruction::DecrementPointer,
             '+' => Instruction::IncreaseValue,
             '-' => Instruction::DecreaseValue,
@@ -84,7 +84,7 @@ fn parse_instructions(source_code: &str) -> Vec<Instruction> {
 }
 
 pub enum Instruction {
-    IncreasePointer,
+    IncrementPointer,
     DecrementPointer,
     IncreaseValue,
     DecreaseValue,
